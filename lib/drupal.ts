@@ -1,23 +1,42 @@
 // lib/drupal.ts
 
 export async function fetchPhotos(page = 0) {
-  const url = new URL(`${process.env.DRUPAL_BASE_URL}/jsonapi/node/photo`);
-  url.searchParams.set("page[offset]", (page * 10).toString());
-  url.searchParams.set("page[limit]", "10");
+  const BASE = process.env.NEXT_PUBLIC_DRUPAL_BASE_URL!;
+  const pageSize = 24;
 
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.api+json",
-  };
+  const url = new URL(`${BASE}/jsonapi/node/foto`);
+  // Medienreferenz beachten: field_fotodatei -> file
+  url.searchParams.set("include", "field_fotodatei,field_fotodatei.field_media_image");
+  url.searchParams.set("sort", "-created");
+  url.searchParams.set("page[offset]", String(page * pageSize));
+  url.searchParams.set("page[limit]", String(pageSize));
+  url.searchParams.append("fields[node--foto]", "title,field_fotodatei");
+  url.searchParams.append("fields[media--image]", "field_media_image");
+  url.searchParams.append("fields[file--file]", "uri,url");
 
-  const auth = process.env.DRUPAL_AUTH_HEADER;
+  const headers: Record<string,string> = { Accept: "application/vnd.api+json" };
+  const auth = process.env.DRUPAL_AUTH_HEADER; // optional: "Basic <base64(user:pass)>"
   if (auth) headers.Authorization = auth;
 
   const res = await fetch(url.toString(), { headers });
+  if (!res.ok) throw new Error(`Drupal fetch failed: ${res.status} ${res.statusText}`);
+  const json = await res.json();
 
-  if (!res.ok) {
-    throw new Error(`Fehler beim Laden der Fotos: ${res.status} ${res.statusText}`);
-  }
+  // included indexieren
+  const inc = new Map<string, any>((json.included || []).map((i:any)=>[`${i.type}--${i.id}`, i]));
 
-  const data = await res.json();
-  return data;
+  // auf {id,title,src} mappen
+  const items = (json.data || []).map((n:any)=>{
+    const mediaRel = n?.relationships?.field_fotodatei?.data;
+    const media = mediaRel ? inc.get(`${mediaRel.type}--${mediaRel.id}`) : null;
+    const fileRel = media?.relationships?.field_media_image?.data;
+    const file = fileRel ? inc.get(`${fileRel.type}--${fileRel.id}`) : null;
+
+    let src = file?.attributes?.url || file?.attributes?.uri?.url || "";
+    if (src && !src.startsWith("http")) src = `${BASE}${src}`;
+
+    return { id:n.id, title:n.attributes?.title || "", src };
+  }).filter((x:any)=>x.src);
+
+  return items;
 }
