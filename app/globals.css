@@ -1,0 +1,87 @@
+/* app/globals.css : minimalistischer, dunkler Foto-Look */
+
+:root {
+  --bg: #0d0d0f;
+  --panel: #121216;
+  --text: #e7e7ea;
+  --muted: #a6a7ad;
+  --accent: #7dd3fc; /* cyan-300 */
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: radial-gradient(1200px 800px at 80% -200px, rgba(125,211,252,.06), transparent 60%) , var(--bg);
+  color: var(--text);
+  font: 500 16px/1.6 system-ui, Segoe UI, Helvetica, Arial, sans-serif;
+}
+
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 20px 120px;
+}
+
+.hero {
+  text-align: center;
+  margin: 10px 0 32px;
+}
+.hero h1 {
+  margin: 0 0 8px;
+  letter-spacing: .3px;
+  font-weight: 700;
+}
+.hero p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Masonry via CSS columns */
+.masonry {
+  column-count: 1;
+  column-gap: 16px;
+  margin-top: 16px;
+}
+@media (min-width: 640px) { .masonry { column-count: 2; } }
+@media (min-width: 1000px){ .masonry { column-count: 3; } }
+
+.photo {
+  break-inside: avoid;
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 16px;
+  transform: translateZ(0);
+  opacity: .75;
+  transition: opacity .25s ease, transform .25s ease, filter .25s ease;
+  filter: saturate(1) contrast(1.05);
+}
+.photo.is-loaded { opacity: 1; }
+
+.photo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  background: #0a0a0d;
+}
+
+/* Hover / Focus */
+@media (hover:hover){
+  .photo:hover { transform: translateY(-4px); filter: saturate(1.05) contrast(1.08); }
+  .masonry:hover .photo:not(:hover) { opacity: .4; }
+}
+
+.sentinel { text-align: center; padding: 24px; color: var(--muted); }
+
+/* Footer */
+.site-footer {
+  margin-top: 48px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .9rem;
+  opacity: .7;
+}
